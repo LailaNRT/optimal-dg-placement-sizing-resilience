@@ -19,7 +19,7 @@ NUM_ITERATIONS = 30
 #   "pga030N30" → convergence study N=30 files
 #   "pga030N60" → convergence study N=60 files
 # -----------------------------------------------------------------------
-RUN_LABEL = "pga030N30L000Y15R010_rho60_sig50"   # hardcoded default (overridden by sys.argv below)
+RUN_LABEL = "pga030N30L000Y15R010_rho00_sig50"   # hardcoded default (overridden by sys.argv below)
 if len(sys.argv) > 1:
     RUN_LABEL = sys.argv[1]   # orchestrator passes LABEL here
 
