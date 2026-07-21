@@ -984,10 +984,13 @@ if __name__ == "__main__":
         # O&M is the PWF-discounted annual stream. (Previously CRF*Y*C_INV and OM*Y*kw,
         # an undiscounted-lifetime convention that over-counted capital ~2x and did not
         # match the objective the MILP actually minimized.)
-        total_installed_kw  = sum(float(v) for v in dg_sizes.values())
         PWF                 = 1.0 / CRF   # present-worth factor (reciprocal of CRF)
         capex_present_value = C_INV
-        om_present_value    = COST_DG_OM_PER_KW_YR * PWF * total_installed_kw
+        # Reuse main_initial.py's own PV(O&M), which already applies the 0.8 kVA->kW
+        # power-factor conversion (Eq. C_OM^PV = C_OM_yr * PWF * 0.8 * S_Cap); dg_sizes
+        # here holds raw nameplate kVA, so recomputing from it without the 0.8 factor
+        # would overstate O&M by 1/0.8.
+        om_present_value    = master_data["financials"]["om_present_value"]
 
         # Risk-averse storm cost = (1-λ)·mean + λ·CVaRα over the per-scenario costs,
         # so the saved upper_bound_total_cost matches the paper's risk-averse objective
