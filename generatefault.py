@@ -103,15 +103,19 @@ def calculate_lognormal_repair_time(num_broken_lines, total_lines=37, sigma=0.5,
     """
     Scenario duration model for post-earthquake distribution circuit restoration.
 
-    Median formula is order-of-magnitude consistent with HAZUS Table 8-27
-    (Distribution Circuits, FEMA 2020) restoration ranges:
-        Slight   (~4 % circuits):  ~7 h
-        Moderate (~12% circuits):  ~24 h
-        Extensive(~50% circuits):  ~72 h
-    The slope (114 / total_lines) spans this range across the network's damage
-    states; it is not a point-by-point fit to HAZUS data.  Restoration
-    uncertainty is instead covered by the sigma sensitivity (default 0.5,
-    per HAZUS lognormal dispersion convention).
+    The slope (114 / total_lines) is chosen so the model's own output spans
+    roughly the same 6-120 h range as HAZUS Table 8-27 (Distribution Circuits,
+    FEMA 2020) across increasing damage, not to reproduce any single HAZUS
+    value. At representative circuit-failure fractions, this formula's own
+    output compares to the HAZUS medians as follows:
+        k/total_lines ~4 % (Slight):    this model ~11 h  |  HAZUS ~7.2 h
+        k/total_lines ~12% (Moderate):  this model ~20 h  |  HAZUS ~24 h
+        k/total_lines ~50% (Extensive): this model ~63 h  |  HAZUS ~72 h
+    Each pair is within the same order of magnitude, not a precise fit;
+    treat HAZUS here as a plausibility check, not a validation target the
+    formula was fitted to. Restoration uncertainty is covered separately by
+    the sigma dispersion (default 0.5, per HAZUS lognormal dispersion
+    convention).
 
     When num_broken_lines == 0 the formula returns a median of 6 h, representing
     base dispatch and assessment time for a seismic operational disturbance
@@ -119,8 +123,9 @@ def calculate_lognormal_repair_time(num_broken_lines, total_lines=37, sigma=0.5,
     horizon of a diesel-backed microgrid (~3 fuel resupply cycles at 40 h each)
     rather than a HAZUS damage-state limit.
 
-    Sources: HAZUS Earthquake Model Technical Manual (FEMA, 2020), Table 8-27;
-             Baghmisheh & Mahsuli (2021) for pole fragility parameters.
+    References (comparison targets, not derivation sources):
+        HAZUS Earthquake Model Technical Manual (FEMA, 2020), Table 8-27;
+        Baghmisheh & Mahsuli (2021) for pole fragility parameters.
     """
     # Slope scales linearly with network size:
     #   114 h = target_max_median (120 h) − base_dispatch (6 h)
