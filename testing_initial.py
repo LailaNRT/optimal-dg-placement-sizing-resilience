@@ -76,7 +76,7 @@ dg_sizes       = placement.get("sizes_kva", placement.get("sizes_kw", {}))
 print(f"   Diesel DGs locked at: {purchased_dgs}")
 for dg in purchased_dgs:
     sz = float(dg_sizes.get(dg, dg_sizes.get(str(dg), 0)))
-    print(f"     Bus {dg:>6s}: Diesel {sz:.0f} kW")
+    print(f"     Bus {dg:>6s}: Diesel {sz:.0f} kVA")
 
 s = SCENARIO_KEY   # scenario label used as index key throughout
 
@@ -641,7 +641,7 @@ for dg in purchased_dgs:
     q_a       = pulp.value(Q_G[dg,'a',s]) or 0
     cap       = float(dg_sizes.get(dg, dg_sizes.get(str(dg), 0)))
     status    = "🟢 ACTIVE" if alive else "🔴 DEAD"
-    print(f"    Bus {dg:>6s}: {status}  |  P = {p_total:6.1f} kW / {cap:.0f} kW rated  "
+    print(f"    Bus {dg:>6s}: {status}  |  P = {p_total:6.1f} kW / {cap:.0f} kVA rated  "
           f"|  Q_a = {q_a:5.1f} kVAr")
 
 # ── Switch decisions ──────────────────────────────────────────────────────────
