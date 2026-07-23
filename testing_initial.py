@@ -292,11 +292,11 @@ for tx in transformers:
 print(f"\n🚀 Building single-event MILP for '{SCENARIO_KEY}'...")
 milp = pulp.LpProblem("SingleEvent_CSH", pulp.LpMinimize)
 
-# ── First-stage: DG placement is FIXED by the master plan, so x_G / P_Cap are
+# ── First-stage: DG placement is FIXED by the master plan, so x_G / S_Cap are
 # plain constants here, not variables pinned by equality constraints. This
-# also makes the P_Cap * s_N product exactly linear (no big-M linearization).
+# also makes the S_Cap * s_N product exactly linear (no big-M linearization).
 x_G   = {c: (1 if c in purchased_dgs else 0) for c in candidate_buses}
-P_Cap = {c: (float(dg_sizes.get(c, dg_sizes.get(str(c), 0))) if c in purchased_dgs else 0.0)
+S_Cap = {c: (float(dg_sizes.get(c, dg_sizes.get(str(c), 0))) if c in purchased_dgs else 0.0)
          for c in candidate_buses}
 
 # ── Second-stage operational variables ───────────────────────────────────────
@@ -410,19 +410,19 @@ for c in candidate_buses:
 for c in candidate_buses:
     for p in phases:
         # 1. Individual Phase Limits: Max 1/3 of total capacity per phase
-        milp += P_G[c,p,s] <= 0.8 * P_Cap[c] / 3.0,      f"DG_Pmax_{c}_{p}"
+        milp += P_G[c,p,s] <= 0.8 * S_Cap[c] / 3.0,      f"DG_Pmax_{c}_{p}"
         milp += P_G[c,p,s] <= M_Power * s_N[c,s],        f"DG_Pgate_{c}_{p}"
 
         # 2. Reactive power limit (standard 0.8 PF → Q max ≈ 60 % of P_rated)
-        milp += Q_G[c,p,s] <=  0.6 * (P_Cap[c] / 3.0),   f"DG_Qmax_{c}_{p}"
-        milp += Q_G[c,p,s] >= -0.6 * (P_Cap[c] / 3.0),   f"DG_Qmin_{c}_{p}"
+        milp += Q_G[c,p,s] <=  0.6 * (S_Cap[c] / 3.0),   f"DG_Qmax_{c}_{p}"
+        milp += Q_G[c,p,s] >= -0.6 * (S_Cap[c] / 3.0),   f"DG_Qmin_{c}_{p}"
         milp += Q_G[c,p,s] <=  M_Power * s_N[c,s],        f"DG_Qgate_hi_{c}_{p}"
         milp += Q_G[c,p,s] >= -M_Power * s_N[c,s],        f"DG_Qgate_lo_{c}_{p}"
 
     # 3. ASYMMETRIC INJECTION:
-    # Total P across phases ≤ P_max = 0.8 × S_cap (P_Cap holds kVA from sizes_kva).
+    # Total P across phases ≤ P_max = 0.8 × S_cap (S_Cap holds kVA from sizes_kva).
     p_tot = pulp.lpSum([P_G[c,p,s] for p in phases])
-    milp += p_tot <= 0.8 * P_Cap[c] * s_N[c,s], f"DG_Cap3ph_Total_{c}"
+    milp += p_tot <= 0.8 * S_Cap[c] * s_N[c,s], f"DG_Cap3ph_Total_{c}"
 
 # ── Radiality: line status ────────────────────────────────────────────────────
 for line in all_lines:
