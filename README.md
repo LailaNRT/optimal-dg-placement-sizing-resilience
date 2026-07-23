@@ -138,7 +138,7 @@ DG sizes are stored as nameplate apparent power in kVA; active/reactive power li
 
 | DG Investment vs. Risk Aversion | DG Placement Frequency |
 |---|---|
-| ![Investment swarm](investment_pga_lambda_swarm.png) | ![DG heatmap](dg_heatmap_network.png) |
+| ![Investment swarm](investment_pga_lambda_swarm.png) | ![DG heatmap](dg_heatmap_networkpga030.png) |
 
 **Post-event microgrid formation** (single representative fault scenario, PGA = 0.3g):
 
