@@ -250,11 +250,11 @@ def evaluate_single_scenario(scenario_name, current_faults, scenario_duration, p
 
     saa_model = pulp.LpProblem(f"Eval_{scenario_name}", pulp.LpMinimize)
 
-    # First-stage DG placement is FIXED by the master plan, so x_G / P_Cap are
+    # First-stage DG placement is FIXED by the master plan, so x_G / S_Cap are
     # plain constants here, not variables pinned by equality constraints. This
-    # also makes the P_Cap * s_N product exactly linear (no big-M linearization).
+    # also makes the S_Cap * s_N product exactly linear (no big-M linearization).
     x_G   = {c: (1 if c in purchased_dgs else 0) for c in candidate_buses}
-    P_Cap = {c: (float(dg_sizes.get(c, dg_sizes.get(str(c), 0))) if c in purchased_dgs else 0.0)
+    S_Cap = {c: (float(dg_sizes.get(c, dg_sizes.get(str(c), 0))) if c in purchased_dgs else 0.0)
              for c in candidate_buses}
 
     s_N = pulp.LpVariable.dicts("s_N", ((i, s) for i in nodes), cat='Binary')
@@ -326,14 +326,16 @@ def evaluate_single_scenario(scenario_name, current_faults, scenario_duration, p
                 # Installed DG anchors island voltage when its bus is alive
                 saa_model += U_N[c,p,s] >= 1.0 - M_Volt * (1 - s_N[c,s])
                 saa_model += U_N[c,p,s] <= 1.0 + M_Volt * (1 - s_N[c,s])
-            saa_model += P_G[c,p,s] <= 0.8 * P_Cap[c] / 3.0
+            saa_model += P_G[c,p,s] <= 0.8 * S_Cap[c] / 3.0
             saa_model += P_G[c,p,s] <= M_Power * s_N[c,s]
-            saa_model += Q_G[c,p,s] <= 0.6 * (P_Cap[c] / 3.0)
-            saa_model += Q_G[c,p,s] >= -0.6 * (P_Cap[c] / 3.0)
+            saa_model += Q_G[c,p,s] <= 0.6 * (S_Cap[c] / 3.0)
+            saa_model += Q_G[c,p,s] >= -0.6 * (S_Cap[c] / 3.0)
             saa_model += Q_G[c,p,s] <= M_Power * s_N[c,s]
             saa_model += Q_G[c,p,s] >= -M_Power * s_N[c,s]
-        # Exact product (P_Cap is constant): capacity counts only when bus is alive
-        saa_model += pulp.lpSum([P_G[c,p,s] for p in phases]) <= P_Cap[c] * s_N[c,s]
+        # Exact product (S_Cap is constant): capacity counts only when bus is alive.
+        # 0.8x matches P_max = 0.8*S_Cap (Eq. dg_p_total); this bound was already
+        # non-binding since the per-phase caps above sum to the same 0.8*S_Cap limit.
+        saa_model += pulp.lpSum([P_G[c,p,s] for p in phases]) <= 0.8 * S_Cap[c] * s_N[c,s]
 
     for line in all_lines:
         name, b1, b2 = line['name'], line['bus1'], line['bus2']
